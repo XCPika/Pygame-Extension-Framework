@@ -27,7 +27,7 @@ class ICollisionModule(IModule):
                 hits = sprite.spritecollide(self.obj,
                                             self.obj.game.groups[group],
                                             False,
-                                            collided=self.masked_collision_callback if self.masked else None)
+                                            sprite.collide_mask if self.masked else None)
                 self._loop_hits(hits, group)
 
     def _loop_hits(self, hits, group):

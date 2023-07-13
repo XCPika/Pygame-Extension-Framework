@@ -7,7 +7,7 @@ from engine.color import Color
 
 class Text(GameObject):
     def __init__(self, text, 
-                 color: tuple = Color(1, 1, 1, 0).RGB, 
+                 color: tuple = Color(1, 1, 1, 1).RGBA, 
                  font: py.font.Font = None,
                  pos: tuple = (0,0),
                  game = None,
@@ -18,11 +18,16 @@ class Text(GameObject):
             font = py.font.Font("engine/ui/i_pixel_u.ttf", 25)
 
         self.font, self.text, self.color, self.pos = font, text, color, pos
-        self.update_text(str(self.text))
+        self.add_layer(self.draw_text())
+        self.rect = self.get_layer_image(0).get_rect(topleft=self.pos)
 
-    def update(self): pass
+    def draw_text(self):
+        font = self.font.render(self.text, 1, self.color)
+        surface = py.Surface(font.get_size(), flags=py.SRCALPHA)
+        surface.blit(font, (0, 0))
+        return surface
 
     def update_text(self, text):
-        self.text = text
-        self.image = self.font.render(text, 1, self.color)
-        self.rect = self.image.get_rect(center=self.pos)
+        self.text = text    
+        self.set_layer(self.draw_text(), 0)
+        self.rect = self.get_layer_image(0).get_rect(topleft=self.pos)

@@ -33,7 +33,6 @@ class Parallax(IGameObject):
                 offset = self.calculate_offset()
                 if offset[0] != 0:
                     x = self.pos[0] - ((offset[0] * self.scroll_speed) * i)
-                    print(x)
             surface.blit(v, (x, y))
         self.pos = (init_x - offset[0], 0)
         return surface

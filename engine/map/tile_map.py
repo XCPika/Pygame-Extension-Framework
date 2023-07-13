@@ -50,7 +50,7 @@ class TileMap(GameObject):
         if self.follow_camera:
             self.camera = TileMapCamera(game, self.map_size, self.follow_target)
 
-    def update(self):
+    def update(self, *args, **kwargs) -> None:
         if self.follow_camera:
             self.camera.update()
 

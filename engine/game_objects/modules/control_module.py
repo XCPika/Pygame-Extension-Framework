@@ -8,12 +8,15 @@ from engine.game_objects.modules import IModule
 class IControlModule(IModule):
     __metaclass__ = ABCMeta
 
-    def __init__(self, obj, mask=False, callback=None):
+    def __init__(self, obj, mask=False, callback=None, allow_control: bool = True):
         self.callback = callback
+        self.allow_control = allow_control
         super(IControlModule, self).__init__(obj)
 
     @abstractmethod
-    def update(self, *args: Any, **kwargs: Any) -> None: self.callback()
+    def update(self, *args: Any, **kwargs: Any) -> None: 
+        if self.allow_control: 
+            self.callback()
 
     # GetAxis - axis: str -> Checks the py.key.get_pressed() to see if the axis sent through was pressed and returns its
     #                        Corresponding value

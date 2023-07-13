@@ -9,8 +9,10 @@ class LoopingMap(IGameObject):
     def __init__(self, game, file: str = "map.png", speed:list=[0.5, 0]):
         super(LoopingMap, self).__init__("map", game)
         self.file = file
-        self.background = py.image.load(f"{self.game.game_dir}\\data\\images\\{file}").convert_alpha()
-        self.rect = self.background.get_rect()
+        self.background = py.image.load(f"{self.game.game_dir}/{file}").convert_alpha()
+        self.add_layer(self.background)
+        self.add_layer(self.background)
+        self.rect = self.get_layer_image(0).get_rect()
         self.speed = speed
         self.bg_pos = [0, 0]
         if speed[0] < 0 and speed[0] < speed[1]:
@@ -30,10 +32,11 @@ class LoopingMap(IGameObject):
         else:
             self.bg_2_pos = [0, self.rect.height * (-1 if self.dir == 0 else 1)]
 
-    def update(self):
+    def update(self, *args, **kwargs) -> None:
         # MOVE BOTH BACKGROUNDS AN EQUAL AMOUNT
-        self.bg_pos = [self.bg_pos[0] - self.speed[0], self.bg_pos[1] - self.speed[1]]
-        self.bg_2_pos = [self.bg_2_pos[0] - self.speed[0], self.bg_2_pos[1] - self.speed[1]]
+        dt = self.game.delta_time
+        self.bg_pos = [self.bg_pos[0] - (self.speed[0] * dt), self.bg_pos[1] - (self.speed[1] * dt)]
+        self.bg_2_pos = [self.bg_2_pos[0] - (self.speed[0] * dt), self.bg_2_pos[1] - (self.speed[1] * dt)]
         # LOOP DETECTING 
         axis = self.rect.width if self.axis == 0 else self.rect.height
         # MOVE FIRST BACKGROUND IF IT GOES PASSED ITS AXIS EDGE
@@ -42,12 +45,5 @@ class LoopingMap(IGameObject):
         # MOVE SECOND BACKGROUND IF IT GOES PASSED ITS AXIS EDGE
         if get_truth(self.bg_2_pos[self.axis], "<=" if self.dir == 1 else ">=", axis * (-1 if self.dir == 1 else 1)):
             self.bg_2_pos[self.axis] = axis * (1 if self.dir == 1 else -1)
-        # RENDER THE NEW BACKGROUND
-        self.image = self.render() 
-        self.rect = self.image.get_rect()
-
-    def render(self) -> py.Surface:
-        surface = py.Surface(self.rect.size)
-        surface.blit(self.background, self.bg_pos)
-        surface.blit(self.background, self.bg_2_pos)
-        return surface
+        self.layers[0]["pos"] = self.bg_pos
+        self.layers[1]["pos"] = self.bg_2_pos
