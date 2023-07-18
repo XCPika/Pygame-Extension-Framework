@@ -5,7 +5,8 @@ from pygame.math import Vector2 as V2, Vector3 as V3
 # Vector2 - Custom Vector2 based on a pygame.V2 for easier extension
 class Vector2(V2):
     def __init__(self, x, y): super(Vector2, self).__init__(x, y)
-    def __mul__(self, other): return Vector2(self.x * other.x, self.y * other.y)
+    def __mul__(a, b) -> 'Vector2': return Vector2(a.x * b.x, a.y * b.y)
+    def __gt__(a, b) -> bool:  return True if a[0] > b[0] else False or True if a[1] > b[1] else False
     @staticmethod
     def get_diff(a: pygame.math.Vector2, b: pygame.math.Vector2): return Vector2(a.x, a.y).xy - Vector2(b.x, b.y).xy
     @staticmethod

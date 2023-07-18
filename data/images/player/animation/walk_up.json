@@ -1,0 +1,9 @@
+{
+  "name": "walk_up",
+  "animation": {
+    "layer": 0,
+    "frames": [5, 4, 3, 4],
+    "frame_time": 100,
+    "loop": "True"
+  }
+}

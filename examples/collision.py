@@ -1,9 +1,45 @@
+from random import random, randint
+
 import pygame as py
+
 from engine.game_engine import Pygame
 from engine.color import Color
 from engine.game_objects import IGameObject
-from engine.game_objects.modules import IControlModule, IAnimationModule
-from engine.image import SpriteSheet
+from engine.game_objects.modules import IControlModule, ICollisionModule
+
+
+# Rock Object #
+class Rock(IGameObject):
+    def __init__(self, game: Pygame):
+        super(Rock, self).__init__('env', game)
+        self.set_module("collision", ICollisionModule(self, False))
+        self.pos = (self.game.screen.get_width(), randint(0, self.game.screen.get_height()))
+        self.vel = (randint(-2,-1), randint(-1, 1) * (random() * 0.5))
+        spr = py.image.load(f"{self.game.game_dir}/data/images/rock.png").convert_alpha()
+        scale = max(25, random() * 48)
+        spr = py.transform.scale(spr, (scale, scale))
+        spr = py.transform.rotate(spr, randint(-25, 25))
+        self.add_layer(spr)
+        self.rect = self.get_layer_image(self.primary_layer).get_rect(center=self.pos)
+        self.mask = py.mask.from_surface(self.get_layer_image(0))
+
+    def update(self, *args, **kwargs) -> None:
+        self.pos = (self.pos[0] + self.vel[0], self.pos[1] + self.vel[1])
+        self.rect = self.get_layer_image(0).get_rect(center=self.pos)
+        super(Rock, self).update()
+
+
+class RockSpawner(IGameObject):
+    def __init__(self, game: Pygame = None):
+        super().__init__("handler", game)
+        self.spawn_timing = 2000
+        self.last_spawn_time = self.game.time
+
+    def update(self, *args, **kwargs) -> None:
+        if self.last_spawn_time + self.spawn_timing <= self.game.time:
+            self.game.objects.add(f"rock_{randint(0, 999999)}", Rock(self.game))
+            self.last_spawn_time = self.game.time
+        return super().update(*args, **kwargs)
 
 
 # Player Object #
@@ -11,55 +47,42 @@ class Player(IGameObject):
     def __init__(self, pos: tuple, game: Pygame):
         super(Player, self).__init__('player', game)
         self.modules.set_module("control", IControlModule(self, callback=self.callback_input_tick)) # or self.modules['control'] = IControlModule(self, callback=self.callback_input_tick) 
-        self.modules.set_module("animation", IAnimationModule(self))
+        self.set_module("collision", ICollisionModule(self, True, self.callback_collision))
+        self.get_module("collision").collision_groups = ["env"]
 
+        self.add_layer(py.image.load(f"{self.game.game_dir}/data/images/player.png"))
+        self.mask = py.mask.from_surface(self.get_layer_image(0)) # Optional. This allows to masked collisions
         self.pos = pos 
-        self.last_pos = (0, 0) # Used as part of animation logic (Not required)
+        self.rect = self.get_layer_image(0).get_rect(center=self.pos)
 
-        self.sprite_sheet = SpriteSheet(f"{self.game.game_dir}/data/images/ship_00.png", 66, 38).get_image_array()
-        self.add_layer(self.sprite_sheet[0], self.pos)
-        self.rect = self.get_layer_image(0).get_rect(center=self.pos)
-        # Optionally: self.modules.get_module("animation").add_animation_by_json(file_location: str) file_location is relative to game_dir
-        self.modules.get_module("animation").add_animation_by_dict("engines_on",
-            {
-                "layer": 0,
-                "frames": [self.sprite_sheet[1]],
-                "frame_time": 500,
-                "loop": False,
-                "callback": self.callback_engine_anim_ended
-            }
-        )
-        self.modules["animation"].should_animate = True
-        self.rect = self.get_layer_image(0).get_rect(center=self.pos)
-    
-    def callback_engine_anim_ended(self):
-        self.set_layer(self.sprite_sheet[0], layer_id=0)
+    def callback_collision(self, hit, group):
+        hit.destroy()
 
     def callback_input_tick(self):
-        self.last_pos = self.pos
         self.pos = self.modules["control"].get_mouse_pos()
 
     def update(self, *args, **kwargs):
-        if self.last_pos != self.pos:
-            self.modules["animation"].play("engines_on")
-                
         self.rect = self.get_layer_image(0).get_rect(center=self.pos)
         super(Player, self).update()
 
 
-# ANIMATION EXAMPLE #
+# CONTROL EXAMPLE #
 # Main Game Engine Object #
 class Game(Pygame):
     def __init__(self):
         super(Game, self).__init__(1280, 720, "Space Game", fps_target=60)
         self.add_group("player") # The order groups are registered in is what pygame uses as layer render order. First added is first rendered (Put things like map groups in first)
+        self.add_group("env")
+        self.add_group("handler")
+        # SETUP GAME AXIS CONTROLS (IControlModule().get_axis("move_left"))
+        self.axis = {'move_left': {py.K_a: -1, py.K_d: 1}, 'move_up': {py.K_w: -1, py.K_s: 1}}
         self.load_data()
         self.start_game_loop()
 
     def load_data(self):
         super(Game, self).load_data() # Required to set the base dir of the game for easy access in objects without recalculating where to split the path (self.game_dir)
         self.objects["player"] = Player((self.screen.get_width() / 2, self.screen.get_height() / 2), self) # Adds a GameObject to the ObjectHandler so that update and draw calls are triggered correctly
-
+        self.objects["rock_spawner"] = RockSpawner(self)
 
     def draw(self):
         self.screen.fill(Color(1, 1, 1, 1).RGB) # self.screen.fill((255, 255, 255)). Color class is used mostly for storing colors to easily recall but may get more features later
@@ -86,7 +109,7 @@ class Game(Pygame):
                 #     self.debug.set_debug(not self.debug._debug)
                 if event.key == py.K_ESCAPE:
                     self.quit()
-                    
+
 
 if __name__ == '__main__':
     g = Game()

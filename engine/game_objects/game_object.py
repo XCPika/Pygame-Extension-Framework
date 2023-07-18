@@ -1,25 +1,26 @@
-from __future__ import annotations
 from typing import Any
 from abc import ABCMeta, abstractmethod
 from collections import UserDict
 
 import pygame as py
-from engine.game_engine import Pygame
 from engine.game_objects.modules.module import IModule
+from engine.errors.invalid_argument_exception import InvalidArgumentException
 
 
 # Module Handler #
 class ModuleHandler(UserDict):
-    def __setitem__(self, key, obj): super().__setitem__(key, obj)
+    def __setitem__(self, key: str, obj: 'engine.game_objects.IGameObject'): super().__setitem__(key, obj)
     def get_module(self, key: str): return self[key]
     def set_module(self, key: str, module: IModule): self[key] = module
     def update(self): [self[x].update() for x in self if self[x].tick]
-    def contains_key(self, obj) -> bool: return self.keys().__contains__(obj)
+    def contains_key(self, obj: 'engine.game_objects.IGameObject') -> bool: return self.keys().__contains__(obj)
 
 
 # Game Object #
 class GameObject(py.sprite.Sprite):
-    def __init__(self, group="all_sprites", game: Pygame=None):
+    def __init__(self, group: str = "all_sprites", game: 'engine.game_engine.Pygame'= None):
+        if game is None:
+            raise InvalidArgumentException()
         self.group = game.groups[group]
         self.draw_sprite = False if group == "handler" else True
         self.game = game
@@ -74,7 +75,7 @@ class IGameObject(GameObject):
     __metaclass__ = ABCMeta
     # Constructor -> Override, always run Super().__init__()
     @abstractmethod
-    def __init__(self, group: str = "all_sprites", game: Pygame = None): super(IGameObject, self).__init__(group, game)
+    def __init__(self, group: str = "all_sprites", game: 'engine.game_object.Pygame' = None): super(IGameObject, self).__init__(group, game)
     # Destroy -> Kills the game object
     def destroy(self): super(IGameObject, self).destroy()
     # Set Object Key -> Internally used by Object Handler

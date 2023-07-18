@@ -1,0 +1,9 @@
+{
+  "name": "walk_left",
+  "animation": {
+    "layer": 0,
+    "frames": [9, 10, 11, 10],
+    "frame_time": 100,
+    "loop": "True"
+  }
+}

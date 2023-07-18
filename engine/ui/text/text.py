@@ -22,7 +22,7 @@ class Text(GameObject):
         self.rect = self.get_layer_image(0).get_rect(topleft=self.pos)
 
     def draw_text(self):
-        font = self.font.render(self.text, 1, self.color)
+        font = self.font.render(self.text, 1, self.color, wraplength=300)
         surface = py.Surface(font.get_size(), flags=py.SRCALPHA)
         surface.blit(font, (0, 0))
         return surface

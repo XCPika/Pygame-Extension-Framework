@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.5" orientation="orthogonal" renderorder="left-down" width="11" height="7" tilewidth="64" tileheight="64" infinite="0" nextlayerid="6" nextobjectid="22">
+ <tileset firstgid="1" name="silverTileset" tilewidth="64" tileheight="64" tilecount="16" columns="4">
+  <image source="silverTileset.png" width="256" height="256"/>
+ </tileset>
+ <layer id="5" name="Ground" width="11" height="7">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,
+0,8,8,8,8,8,8,8,8,8,0,
+0,8,8,8,8,8,8,8,8,8,0,
+0,8,8,8,8,8,8,8,8,8,0,
+0,8,8,8,8,8,8,8,8,8,0,
+0,8,8,8,8,8,8,8,8,8,0,
+0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="4" name="Walls" width="11" height="7">
+  <data encoding="csv">
+2,1,1,1,1,1,1,1,1,1,10,
+13,0,0,0,0,0,0,0,0,0,9,
+13,0,0,0,0,0,0,0,0,0,9,
+15,0,0,0,0,0,0,0,0,0,11,
+13,0,0,0,0,0,0,0,0,0,9,
+13,0,0,0,0,0,0,0,0,0,9,
+6,5,5,5,5,7,5,5,5,5,14
+</data>
+ </layer>
+ <objectgroup id="3" name="Obstacles">
+  <object id="1" name="wall" x="0.666667" y="0.666667" width="639.333" height="63.3333"/>
+  <object id="2" name="wall" x="0" y="64" width="64" height="128"/>
+  <object id="9" name="wall" x="0" y="256" width="64" height="192"/>
+  <object id="10" name="wall" x="64" y="384" width="256" height="64"/>
+  <object id="11" name="wall" x="384" y="384" width="256" height="64"/>
+  <object id="12" name="wall" x="640" y="256" width="64" height="192"/>
+  <object id="13" name="wall" x="640" y="0" width="64" height="192"/>
+  <object id="19" name="door" type="left" x="0" y="192" width="64" height="64"/>
+  <object id="20" name="door" type="bottom" x="320" y="384" width="64" height="64"/>
+  <object id="21" name="door" type="right" x="640" y="192" width="64" height="64"/>
+ </objectgroup>
+</map>

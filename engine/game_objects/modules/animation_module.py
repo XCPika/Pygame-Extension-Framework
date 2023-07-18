@@ -25,13 +25,13 @@ class IAnimationModule(IModule):
     def add_animation_by_dict(self, name: str,  _dict: dict): self.animations[name] = _dict
 
     def add_animation_by_json(self, file: str):
-        with open(f"{self.obj.game.gameDir}\\{file}", "r") as f:
+        with open(f"{self.obj.game.game_dir}\\{file}", "r") as f:
             data = load(f)
             f.close()
         self.animations[data["name"]] = {
-            "layer": data["layer"],
+            "layer": data["animation"]["layer"],
             "frames": [self.obj.sprite_sheet[x] for x in data["animation"]["frames"]],
-            "frame_time": int(data["frame_time"]),
+            "frame_time": int(data["animation"]["frame_time"]),
             "loop": True if data["animation"]["loop"] == "True" else False
         }
 
@@ -41,6 +41,10 @@ class IAnimationModule(IModule):
 
     def stop(self, animation):
         self.active_anims.remove(animation)
+        self.current_frame = 0
+    
+    def stop_all(self):
+        self.active_anims = []
         self.current_frame = 0
 
     def set_image(self, image, layer_id):

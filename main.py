@@ -5,22 +5,32 @@ import pygame as py
 from engine.game_engine import Pygame
 from engine.color import Color
 from engine.game_objects import IGameObject
-from engine.game_objects.modules import IControlModule, IAnimationModule, ICollisionModule
+from engine.game_objects.modules import IAnimationModule, ICollisionModule
 from engine.image import SpriteSheet
-from engine.ui.text import Text
+from engine.ui.text import TypeWriterText
 from engine.map import LoopingMap
 
+from src.player.player import Player
 
-class UI_NPC_Text(Text):
+
+class UI_NPC_Text(TypeWriterText):
     def __init__(self, game: Pygame = None):
-        super().__init__("test", (125, 125, 125, 255), game.fonts["default"], (250, 600), game, 'ui')
+        super().__init__("We need to push forward! We need to push forward!", (200, 200, 200), game.fonts["8bit"], (135, 590), 10, game=game)
 
+
+class UI_NPC_Text_Box(IGameObject):
+    def __init__(self, game: Pygame = None):
+        super().__init__("ui", game)
+        self.pos = (120, 577)
+        self.add_layer(f"{self.game.game_dir}\\data\\images\\ui\\ui_npc_text_box.png")
+        self.rect = self.get_layer_image(0).get_rect(topleft=self.pos)
 
 class UI_NPC_Box(IGameObject):
     def __init__(self, game: Pygame = None):
         super().__init__("ui", game)
         self.pos = (10, 665)
         # self.add_layer(f"{self.game.game_dir}/data/images/npc_board.png")
+        self.add_layer(py.Surface((100, 100), flags=py.SRCALPHA))
         self.add_layer(py.Surface((100, 100), flags=py.SRCALPHA))
         self.add_layer(py.Surface((100, 100), flags=py.SRCALPHA))
         # self.add_layer(f"{self.game.game_dir}/data/images/npc_box.png")
@@ -55,6 +65,10 @@ class UI_NPC_Box(IGameObject):
                 "callback": self.noise__reversed_anim_ended
             }
         )
+        self.text = UI_NPC_Text(self.game)
+        self.border = UI_NPC_Text_Box(self.game)
+        self.game.objects.add("ui_npc_text", self.text)
+        self.game.objects.add("ui_npc_text_box", self.border)
         self.get_module("animation").should_animate = True
         self.get_module("animation").play("noise")
 
@@ -113,99 +127,6 @@ class RockSpawner(IGameObject):
             self.last_spawn_time = self.game.time
         return super().update(*args, **kwargs)
 
-class Bullet(IGameObject):
-    def __init__(self, pos, game):
-        super(Bullet, self).__init__("player_projectile", game)
-        self.set_module("collision", ICollisionModule(self, True, self.callback_collision))
-        self.get_module("collision").collision_groups = ["env", "enemy"]
-
-        self.pos = pos
-        self.vel = 2
-        self.max_vel = 15
-        self.accel = 4
-        self.spawn_time = self.game.time
-        self.add_layer(f"{self.game.game_dir}/data/images/bullet.png")
-        self.rect = self.get_layer_image(0).get_rect(midleft=self.pos)
-        self.mask = py.mask.from_surface(self.get_layer_image(0))
-
-    def callback_collision(self, hit, group):
-        hit.destroy()
-        self.destroy()
-    
-    def update(self, *args, **kwargs) -> None:
-        self.pos = (self.pos[0] + self.vel, self.pos[1])
-        self.vel = min(self.vel + self.accel, self.max_vel)
-        self.rect = self.get_layer_image(0).get_rect(midleft=self.pos)
-        if self.spawn_time + 2000 <= self.game.time:
-            self.destroy()
-        return super(Bullet, self).update(args, kwargs)
-    
-
-# Player Object #
-class Player(IGameObject):
-    can_fire = True
-    last_fire_time = -2000
-    def __init__(self, pos: tuple, game: Pygame):
-        super(Player, self).__init__('player', game)
-        self.set_module("control", IControlModule(self, callback=self.callback_input_tick, allow_control=False)) # or self.modules['control'] = IControlModule(self, callback=self.callback_input_tick, allow_control=False) 
-        self.set_module("animation", IAnimationModule(self))
-        self.set_module("collision", ICollisionModule(self, True, self.callback_collision))
-        self.get_module("collision").collision_groups = ["env", "enemy"]
-        self.pos = pos 
-        self.last_pos = (0, 0) # Used as part of animation logic (Not required)
-        self.move_speed = 150
-
-        self.sprite_sheet = SpriteSheet(f"{self.game.game_dir}/data/images/ship_00.png", 66, 38).get_image_array()
-        self.add_layer(self.sprite_sheet[0])
-        self.rect = self.get_layer_image(self.primary_layer).get_rect(center=self.pos)
-        self.mask = py.mask.from_surface(self.get_layer_image(0))
-        # Optionally: self.modules.get_module("animation").add_animation_by_json(file_location: str) file_location is relative to game_dir
-        self.get_module("animation").add_animation_by_dict("engines_on",
-            {   
-                "layer": 0,
-                "frames": [self.sprite_sheet[1]],
-                "frame_time": 500,
-                "loop": False,
-                "callback": self.callback_engine_anim_ended
-            }
-        )
-        self.modules["animation"].should_animate = True
-
-    def callback_collision(self, hit, group):
-        hit.destroy()
-
-    def callback_engine_anim_ended(self):
-        self.set_layer(self.sprite_sheet[0], layer_id=0)
-
-    def callback_input_tick(self):
-        self.last_pos = self.pos
-        control = self.get_module("control")
-        pos = (control.get_axis("move_left") * self.move_speed * self.game.delta_time, control.get_axis("move_up") * self.move_speed * self.game.delta_time)
-        shoot = control.get_key(py.K_SPACE)
-        if shoot:
-            if self.last_fire_time + 500 <= self.game.time:
-                self.game.objects.add(f"bullet_{random() * 999999}", 
-                                    Bullet((self.pos[0] + 15, self.pos[1]), self.game)
-                                    )
-                self.last_fire_time = self.game.time
-        self.pos = (self.pos[0] + pos[0], max(min(580, self.pos[1] + pos[1]), 0))
-
-    def update(self, *args, **kwargs) -> None:
-        state = args[0]
-        if state != "start":
-            self.get_module("control").allow_control = True
-            if self.last_pos != self.pos:
-                self.modules["animation"].play("engines_on")
-        else:
-            self.modules["animation"].play("engines_on")
-            self.pos = (self.pos[0] + 1, self.pos[1])
-            if self.pos[0] >= 100:
-                self.game.state = "level_0"
-                self.game.objects.get("ui_npc_box").get_module("animation").play("noise_reversed")
-                
-        self.rect = self.get_layer_image(0).get_rect(center=self.pos)
-        super(Player, self).update(args, kwargs)
-
 
 # MINIMAL RUNNING EXAMPLE #
 # Main Game Engine Object #
@@ -219,6 +140,7 @@ class Game(Pygame):
         self.add_group("env")
         self.add_group("enemy")
         self.add_group('ui')
+        self.fonts["8bit"] = self.get_font("8-BIT WONDER.ttf", 17)
         # SETUP GAME AXIS CONTROLS (IControlModule().get_axis("move_left"))
         self.axis = {'move_left': {py.K_a: -1, py.K_d: 1}, 'move_up': {py.K_w: -1, py.K_s: 1}}
         py.event.set_grab(True)
@@ -240,14 +162,12 @@ class Game(Pygame):
         self.screen.fill(Color(1, 1, 1, 1).RGB) # self.screen.fill((255, 255, 255)). Color class is used mostly for storing colors to easily recall but may get more features later
         super(Game, self).draw() # Required to call the draw function for registered objects
         # UNCOMMENT FOR RECT DEBUGGING
-        for group in self.groups.keys():
-            for sprite in self.groups[group]:
-                if self.debug:
-                    if sprite.debug:
-                        if hasattr(sprite, "mask"):
-                            if sprite.mask is not None:
-                                self.screen.blit(sprite.mask.to_surface(), sprite.rect)
-                        py.draw.rect(py.display.get_surface(), Color(1, 0, 0, 1).RGBA, sprite.rect, 1)
+        if self.debug:
+            for group in self.groups.keys():
+                for sprite in self.groups[group]:
+                    self.debug.debug_collision(sprite)
+                        
+                        
         super(Game, self).render_display() # Required to call the render update of the display (py.display.flip())
 
     def update(self):
@@ -261,7 +181,7 @@ class Game(Pygame):
                 self.quit()
             if event.type == py.KEYDOWN:
                 # UNCOMMENT TO TOGGLE DEBUGGING
-                if event.key == py.K_c: self.debug = not self.debug
+                if event.key == py.K_c: self.debug.set_debug(not self.debug._debug)
                 if event.key == py.K_p:
                     npc_ui = self.objects.get("ui_npc_box")
                     if npc_ui.npc == "":

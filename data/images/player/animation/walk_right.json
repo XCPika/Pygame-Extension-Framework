@@ -1,0 +1,9 @@
+{
+  "name": "walk_right",
+  "animation": {
+    "layer": 0,
+    "frames": [6, 7, 8, 7],
+    "frame_time": 100,
+    "loop": "True"
+  }
+}

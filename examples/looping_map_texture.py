@@ -24,11 +24,10 @@ class Game(Pygame):
         self.screen.fill(Color(1, 1, 1, 1).RGB) # self.screen.fill((255, 255, 255)). Color class is used mostly for storing colors to easily recall but may get more features later
         super(Game, self).draw() # Required to call the draw function for registered objects
         # UNCOMMENT FOR RECT DEBUGGING
-        # for group in self.groups.keys():
-        #     for sprite in self.groups[group]:
-        #         if self.debug:
-        #             if sprite.debug:
-        #                 py.draw.rect(py.display.get_surface(), Color(1, 0, 0, 1).RGBA, sprite.rect, 1)
+        # if self.debug:
+        #     for group in self.groups.keys():
+        #         for sprite in self.groups[group]:
+        #             self.debug.debug_collision(sprite)
         super(Game, self).render_display() # Required to call the render update of the display (py.display.flip())
 
     def update(self):
@@ -42,8 +41,8 @@ class Game(Pygame):
                 self.quit()
             if event.type == py.KEYDOWN:
                 # UNCOMMENT TO TOGGLE DEBUGGING
-                # if event.key == py.K_c:
-                #     self.debug = not self.debug
+                # if event.key == py.K_c: 
+                #     self.debug.set_debug(not self.debug._debug)
                 if event.key == py.K_ESCAPE:
                     self.quit()
 
